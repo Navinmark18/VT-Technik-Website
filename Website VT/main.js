@@ -1,5 +1,10 @@
-const SETTINGS_ENDPOINT = "/api/settings";
-const TRACK_ENDPOINT = "/api/track";
+// Production API URL Support
+const API_BASE_URL = typeof process !== 'undefined' && process.env.VITE_API_URL 
+    ? process.env.VITE_API_URL
+    : (window.location.origin.includes('localhost') ? 'http://localhost:4000' : window.location.origin);
+
+const SETTINGS_ENDPOINT = `${API_BASE_URL}/api/settings`;
+const TRACK_ENDPOINT = `${API_BASE_URL}/api/track`;
 
 const DEFAULT_SETTINGS = {
     theme: {
