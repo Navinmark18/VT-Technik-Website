@@ -4,7 +4,7 @@ let isMaintenance = true;
 // 2. Funktion zum Umschalten (für dich als Admin)
 window.toggleAdmin = () => {
     const pw = prompt("Admin-Passwort:");
-    if (pw === "1234") {
+    if (pw === "1234") {   // <-- Hier kannst du dein eigenes Passwort setzen
         isMaintenance = !isMaintenance;
         renderPage();
     } else {

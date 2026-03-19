@@ -150,16 +150,16 @@ const SettingsSchema = z.object({
 
 const DEFAULT_SETTINGS = {
   theme: {
-    accent: "#ff4d4d",
-    accent2: "#ff6b6b",
-    accent3: "#ff8080",
-    bg1: "#0f0c29",
-    bg2: "#302b63",
-    bg3: "#24243e",
+    accent: "#b97f24",
+    accent2: "#d4a257",
+    accent3: "#f0d3a2",
+    bg1: "#030303",
+    bg2: "#0b0b0b",
+    bg3: "#171717",
   },
   images: {
     homeHero:
-      "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&q=80",
+      "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=2200&q=90",
     anfrageHero:
       "https://images.unsplash.com/photo-1478147427282-58a87a120781?w=1920&q=80",
     mietenHero:
@@ -191,6 +191,71 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "your-openai-ap
   openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
+}
+
+const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
+const ollamaModel = process.env.OLLAMA_MODEL || "llama3.1";
+
+const systemPrompt = `Du bist ein hilfreicher Assistent für Event VT, ein Event-Technik-Verleih-Unternehmen.
+        
+Event VT bietet:
+- Professionelle Lichttechnik
+- Videotechnik mit LED-Wänden, Projektoren und Displays
+- Planung und Umsetzung für visuelle Eventtechnik
+
+Beantworte Fragen freundlich und professionell auf Deutsch. 
+Wenn jemand konkrete Angebote oder Buchungen möchte, verweise sie auf das Anfrageformular auf der Website oder WhatsApp: +1 556 332 4870.
+Halte deine Antworten kurz und präzise (max. 3-4 Sätze).`;
+
+function buildChatMessages(parsed) {
+  const messages = [
+    {
+      role: "system",
+      content: systemPrompt,
+    },
+  ];
+
+  if (parsed.data.history && Array.isArray(parsed.data.history)) {
+    messages.push(...parsed.data.history.slice(-5));
+  }
+
+  messages.push({
+    role: "user",
+    content: parsed.data.message,
+  });
+
+  return messages;
+}
+
+async function callOpenAIChat(messages) {
+  const completion = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages,
+    max_tokens: 200,
+    temperature: 0.7,
+  });
+
+  return completion.choices[0]?.message?.content || "Entschuldigung, ich konnte keine Antwort generieren.";
+}
+
+async function callOllamaChat(messages) {
+  const response = await fetch(`${ollamaBaseUrl}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: ollamaModel,
+      messages,
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Ollama error ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data?.message?.content || "Entschuldigung, ich konnte keine Antwort generieren.";
 }
 
 function normalizeSettings(value) {
@@ -354,7 +419,10 @@ app.post("/api/anfragen", async (req, res) => {
   );
 
   const mailer = getMailer();
-  if (mailer && process.env.SMTP_FROM && process.env.SMTP_TO) {
+  const smtpFrom = process.env.SMTP_FROM || "navin.mark03@gmail.com";
+  const smtpTo = process.env.SMTP_TO || "navin.mark03@gmail.com";
+
+  if (mailer) {
     const subject = `Neue Anfrage: ${data.eventtyp}`;
     const text = [
       "Neue Anfrage eingegangen:",
@@ -373,8 +441,8 @@ app.post("/api/anfragen", async (req, res) => {
 
     try {
       await mailer.sendMail({
-        from: process.env.SMTP_FROM,
-        to: process.env.SMTP_TO,
+        from: smtpFrom,
+        to: smtpTo,
         subject,
         text,
       });
@@ -568,64 +636,30 @@ app.post("/api/chat", async (req, res) => {
     return res.status(400).json({ ok: false, error: "Invalid input" });
   }
 
-  if (!openai) {
-    return res.status(503).json({ 
-      ok: false, 
-      error: "AI service not configured",
-      message: "Der KI-Chat ist derzeit nicht verfügbar. Bitte kontaktieren Sie uns direkt."
-    });
-  }
-
   try {
-    const messages = [
-      {
-        role: "system",
-        content: `Du bist ein hilfreicher Assistent für Event VT, ein Event-Technik-Verleih-Unternehmen.
-        
-Event VT bietet:
-- Professionelle Veranstaltungstechnik
-- Ton- und Lichttechnik
-- DJ-Equipment
-- LED-Wände und Bildschirme
-- Bühnen und Rigging
-- Komplette Event-Pakete
+    const messages = buildChatMessages(parsed);
+    let reply;
 
-Beantworte Fragen freundlich und professionell auf Deutsch. 
-Wenn jemand konkrete Angebote oder Buchungen möchte, verweise sie auf das Anfrageformular auf der Website oder WhatsApp: +1 556 332 4870.
-Halte deine Antworten kurz und präzise (max. 3-4 Sätze).`
-      }
-    ];
-
-    // Add conversation history if provided
-    if (parsed.data.history && Array.isArray(parsed.data.history)) {
-      messages.push(...parsed.data.history.slice(-5)); // Last 5 messages only
+    if (openai) {
+      reply = await callOpenAIChat(messages);
+    } else {
+      reply = await callOllamaChat(messages);
     }
-
-    // Add current user message
-    messages.push({
-      role: "user",
-      content: parsed.data.message
-    });
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages,
-      max_tokens: 200,
-      temperature: 0.7,
-    });
-
-    const reply = completion.choices[0]?.message?.content || "Entschuldigung, ich konnte keine Antwort generieren.";
 
     return res.json({
       ok: true,
       message: reply
     });
   } catch (error) {
-    console.error("OpenAI Error:", error);
+    const message = openai
+      ? "Es tut mir leid, ich kann gerade nicht antworten. Bitte versuchen Sie es später erneut."
+      : "Der KI-Chat ist derzeit nicht verfügbar. Bitte stellen Sie sicher, dass Ollama läuft.";
+
+    console.error("Chat Error:", error);
     return res.status(500).json({
       ok: false,
       error: "AI request failed",
-      message: "Es tut mir leid, ich kann gerade nicht antworten. Bitte versuchen Sie es später erneut."
+      message
     });
   }
 });
@@ -637,4 +671,4 @@ app.listen(port, () => {
 
 
 //npm install
-//npm run dev
+//  

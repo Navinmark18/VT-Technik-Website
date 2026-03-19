@@ -5,18 +5,20 @@ const API_BASE_URL = typeof process !== 'undefined' && process.env.VITE_API_URL
 
 const SETTINGS_ENDPOINT = `${API_BASE_URL}/api/settings`;
 const TRACK_ENDPOINT = `${API_BASE_URL}/api/track`;
+const SETTINGS_CACHE_KEY = "eventVT_settings_cache";
+let hasTrackedVisit = false;
 
 const DEFAULT_SETTINGS = {
     theme: {
-        accent: "#ff4d4d",
-        accent2: "#ff6b6b",
-        accent3: "#ff8080",
-        bg1: "#0f0c29",
-        bg2: "#302b63",
-        bg3: "#24243e"
+        accent: "#b97f24",
+        accent2: "#d4a257",
+        accent3: "#f0d3a2",
+        bg1: "#030303",
+        bg2: "#0b0b0b",
+        bg3: "#171717"
     },
     images: {
-        homeHero: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&q=80",
+        homeHero: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=2200&q=90",
         anfrageHero: "https://images.unsplash.com/photo-1478147427282-58a87a120781?w=1920&q=80",
         mietenHero: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80",
         service: [
@@ -73,6 +75,32 @@ function setRgbVar(name, hexColor) {
     setRootVar(name, `${rgb.r}, ${rgb.g}, ${rgb.b}`);
 }
 
+function resolveImageUrl(imageUrl) {
+    if (!imageUrl || typeof imageUrl !== "string") {
+        return "";
+    }
+
+    const trimmed = imageUrl.trim();
+    if (!trimmed) {
+        return "";
+    }
+
+    if (
+        trimmed.startsWith("http://") ||
+        trimmed.startsWith("https://") ||
+        trimmed.startsWith("data:") ||
+        trimmed.startsWith("blob:")
+    ) {
+        return trimmed;
+    }
+
+    if (trimmed.startsWith("/")) {
+        return `${API_BASE_URL}${trimmed}`;
+    }
+
+    return `${API_BASE_URL}/${trimmed}`;
+}
+
 function applySettings(settings) {
     const normalized = {
         theme: { ...DEFAULT_SETTINGS.theme, ...(settings?.theme || {}) },
@@ -98,22 +126,41 @@ function applySettings(settings) {
     setRootVar("--bg-3", normalized.theme.bg3);
 
     if (normalized.images.homeHero) {
-        setRootVar("--home-hero-image", `url('${normalized.images.homeHero}')`);
+        const homeHeroUrl = resolveImageUrl(normalized.images.homeHero);
+        if (homeHeroUrl) {
+            setRootVar("--home-hero-image", `url('${homeHeroUrl}')`);
+        }
     }
     if (normalized.images.anfrageHero) {
-        setRootVar("--anfrage-hero-image", `url('${normalized.images.anfrageHero}')`);
+        const anfrageHeroUrl = resolveImageUrl(normalized.images.anfrageHero);
+        if (anfrageHeroUrl) {
+            setRootVar("--anfrage-hero-image", `url('${anfrageHeroUrl}')`);
+        }
     }
     if (normalized.images.mietenHero) {
-        setRootVar("--mieten-hero-image", `url('${normalized.images.mietenHero}')`);
+        const mietenHeroUrl = resolveImageUrl(normalized.images.mietenHero);
+        if (mietenHeroUrl) {
+            setRootVar("--mieten-hero-image", `url('${mietenHeroUrl}')`);
+        }
     }
 
     const serviceImages = Array.isArray(normalized.images.service)
         ? normalized.images.service
-        : DEFAULT_SETTINGS.images.service;
+        : [];
     document.querySelectorAll("[data-service-index]").forEach((element) => {
         const index = Number(element.getAttribute("data-service-index"));
-        if (Number.isInteger(index) && serviceImages[index]) {
-            element.style.setProperty("--card-image", `url('${serviceImages[index]}')`);
+        if (!Number.isInteger(index)) {
+            return;
+        }
+
+        const configuredImage = typeof serviceImages[index] === "string"
+            ? serviceImages[index].trim()
+            : "";
+        const fallbackImage = DEFAULT_SETTINGS.images.service[index] || DEFAULT_SETTINGS.images.service[0];
+        const finalImage = resolveImageUrl(configuredImage || fallbackImage);
+
+        if (finalImage) {
+            element.style.setProperty("--card-image", `url('${finalImage}')`);
         }
     });
 
@@ -139,6 +186,12 @@ function applySettings(settings) {
         showMaintenanceMode(normalized.maintenance.message);
     } else {
         hideMaintenanceMode();
+    }
+
+    try {
+        localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(normalized));
+    } catch (error) {
+        // Ignore storage errors (private mode, quota, etc.)
     }
 }
 
@@ -215,20 +268,41 @@ async function loadSettings() {
     try {
         const response = await fetch(SETTINGS_ENDPOINT, { cache: "no-store" });
         if (!response.ok) {
-            return;
+            return false;
         }
 
         const payload = await response.json();
         if (payload?.settings) {
             applySettings(payload.settings);
+            return true;
         }
+        return false;
     } catch (error) {
         console.warn("Settings load failed", error);
+        return false;
     }
 }
 
+function loadCachedSettings() {
+    try {
+        const raw = localStorage.getItem(SETTINGS_CACHE_KEY);
+        if (!raw) {
+            return null;
+        }
+
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function hasAnalyticsConsent() {
+    return Boolean(window.EventVTConsent?.hasConsent?.("analytics"));
+}
+
 function trackVisit() {
-    if (!window.location) {
+    if (!window.location || hasTrackedVisit || !hasAnalyticsConsent()) {
         return;
     }
 
@@ -242,16 +316,32 @@ function trackVisit() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
         keepalive: true
-    }).catch(() => undefined);
+    })
+        .then(() => {
+            hasTrackedVisit = true;
+        })
+        .catch(() => undefined);
 }
 
 function trackSocialClick(platform) {
+    if (!hasAnalyticsConsent()) {
+        return;
+    }
+
     fetch("/api/social/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ platform }),
         keepalive: true
     }).catch(() => undefined);
+}
+
+function setupConsentTracking() {
+    window.addEventListener("eventvt:consent-changed", (event) => {
+        if (event.detail?.analytics) {
+            trackVisit();
+        }
+    });
 }
 
 function setupSocialTracking() {
@@ -271,9 +361,182 @@ function setupSocialTracking() {
     });
 }
 
+function setupScrollAnimations() {
+    const targets = Array.from(document.querySelectorAll(
+        ".hero-copy, .hero-panel, .strip-card, .section-heading, .service-card, .editorial-panel, .process-step, .cta-section"
+    ));
+
+    if (targets.length === 0) {
+        return;
+    }
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const lowPowerDevice = typeof navigator !== "undefined"
+        && typeof navigator.hardwareConcurrency === "number"
+        && navigator.hardwareConcurrency <= 4;
+
+    if (reduceMotion || lowPowerDevice) {
+        targets.forEach((element) => {
+            element.classList.add("is-visible");
+        });
+        return;
+    }
+
+    document.documentElement.classList.add("js-enhanced");
+
+    targets.forEach((element, index) => {
+        element.classList.add("reveal-on-scroll");
+        element.style.setProperty("--reveal-delay", `${(index % 4) * 80}ms`);
+    });
+
+    const observer = new IntersectionObserver(
+        (entries, instance) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+
+                entry.target.classList.add("is-visible");
+                instance.unobserve(entry.target);
+            });
+        },
+        {
+            threshold: 0.16,
+            rootMargin: "0px 0px -8% 0px"
+        }
+    );
+
+    targets.forEach((target) => observer.observe(target));
+}
+
+function setupHeroMotion() {
+    const hero = document.querySelector(".hero");
+    const heroBg = document.querySelector(".hero-bg");
+
+    if (!hero || !heroBg) {
+        return;
+    }
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+        document.documentElement.classList.add("page-loaded");
+        return;
+    }
+
+    let currentX = 0;
+    let currentY = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let rafId = null;
+
+    const animate = () => {
+        const time = performance.now();
+        const idleX = Math.sin(time / 1450) * 22;
+        const idleY = Math.cos(time / 1750) * 14;
+        const destinationX = targetX + idleX;
+        const destinationY = targetY + idleY;
+
+        currentX += (destinationX - currentX) * 0.14;
+        currentY += (destinationY - currentY) * 0.14;
+
+        heroBg.style.setProperty("--hero-shift-x", `${currentX.toFixed(3)}px`);
+        heroBg.style.setProperty("--hero-shift-y", `${currentY.toFixed(3)}px`);
+
+        rafId = requestAnimationFrame(animate);
+    };
+
+    const requestAnimate = () => {
+        if (rafId !== null) {
+            return;
+        }
+        rafId = requestAnimationFrame(animate);
+    };
+
+    const setTargetFromPointer = (clientX, clientY) => {
+        const rect = hero.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+            return;
+        }
+
+        const px = (clientX - rect.left) / rect.width - 0.5;
+        const py = (clientY - rect.top) / rect.height - 0.5;
+        targetX = px * 44;
+        targetY = py * 30;
+    };
+
+    hero.addEventListener("pointermove", (event) => {
+        setTargetFromPointer(event.clientX, event.clientY);
+    });
+
+    hero.addEventListener(
+        "touchmove",
+        (event) => {
+            if (!event.touches || event.touches.length === 0) {
+                return;
+            }
+
+            const touch = event.touches[0];
+            setTargetFromPointer(touch.clientX, touch.clientY);
+        },
+        { passive: true }
+    );
+
+    hero.addEventListener("mouseleave", () => {
+        targetX = 0;
+        targetY = 0;
+    });
+
+    hero.addEventListener("touchend", () => {
+        targetX = 0;
+        targetY = 0;
+    }, { passive: true });
+
+    requestAnimate();
+
+    requestAnimationFrame(() => {
+        document.documentElement.classList.add("page-loaded");
+    });
+}
+
+function setupCardSpotlight() {
+    const cards = Array.from(document.querySelectorAll(".panel-item"));
+    if (cards.length === 0) {
+        return;
+    }
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+    if (reduceMotion || coarsePointer) {
+        return;
+    }
+
+    cards.forEach((card) => {
+        card.addEventListener("pointermove", (event) => {
+            const rect = card.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+            card.style.setProperty("--spot-x", `${Math.min(100, Math.max(0, x)).toFixed(2)}%`);
+            card.style.setProperty("--spot-y", `${Math.min(100, Math.max(0, y)).toFixed(2)}%`);
+        });
+    });
+}
+
 function initSite() {
-    applySettings(DEFAULT_SETTINGS);
-    loadSettings();
+    const cachedSettings = loadCachedSettings();
+    if (cachedSettings) {
+        applySettings(cachedSettings);
+    }
+
+    loadSettings().then((loaded) => {
+        if (!loaded && !cachedSettings) {
+            applySettings(DEFAULT_SETTINGS);
+        }
+    });
+    setupConsentTracking();
+    setupHeroMotion();
+    setupCardSpotlight();
+    setupScrollAnimations();
     trackVisit();
     setupSocialTracking();
 }

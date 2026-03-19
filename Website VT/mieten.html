@@ -495,11 +495,8 @@
         <div class="filters">
             <div class="filter-buttons">
                 <button class="filter-btn active" data-category="alle">Alle</button>
-                <button class="filter-btn" data-category="ton">🎤 Tontechnik</button>
                 <button class="filter-btn" data-category="licht">💡 Lichttechnik</button>
-                <button class="filter-btn" data-category="buehne">🎭 Bühnentechnik</button>
                 <button class="filter-btn" data-category="video">📹 Videotechnik</button>
-                <button class="filter-btn" data-category="zubehoer">🔧 Zubehör</button>
             </div>
         </div>
 
@@ -509,7 +506,7 @@
         </div>
 
         <footer>
-            <p>&copy; 2026 Event VT | <a href="#">Impressum</a> | <a href="#">Datenschutz</a> | <a href="admin.html">Admin Login</a></p>
+            <p>&copy; 2026 Event VT | <a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a> | <button type="button" class="footer-consent-link" data-open-consent>Cookie-Einstellungen</button> | <a href="admin.html">Admin Login</a></p>
         </footer>
     </div>
 
@@ -536,12 +533,13 @@
     </div>
 
     <script src="./config.js"></script>
+    <script src="./consent.js"></script>
     <script src="./main.js"></script>
     <script>
         // Prüfe ob Mietservice im Wartungsmodus ist
         window.checkMaintenanceMode('mieten');
         // Produktdaten
-        const products = [
+        const allProducts = [
             {
                 id: 1,
                 name: "JBL PRX825W",
@@ -706,6 +704,10 @@
             }
         ];
 
+        const products = allProducts.filter((product) =>
+            product.category === 'licht' || product.category === 'video'
+        );
+
         // Warenkorb
         let cart = JSON.parse(localStorage.getItem('eventVT_cart') || '[]');
 
@@ -740,11 +742,8 @@
 
         function getCategoryName(category) {
             const names = {
-                'ton': '🎤 Tontechnik',
                 'licht': '💡 Lichttechnik',
-                'buehne': '🎭 Bühnentechnik',
-                'video': '📹 Videotechnik',
-                'zubehoer': '🔧 Zubehör'
+                'video': '📹 Videotechnik'
             };
             return names[category] || category;
         }

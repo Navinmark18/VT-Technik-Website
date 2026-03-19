@@ -215,22 +215,22 @@
                 <form id="anfrageForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="vorname"><span class="form-icon">👤</span>Vorname <span class="required">*</span></label>
+                            <label for="vorname"><span class="form-icon"></span>Vorname <span class="required">*</span></label>
                             <input type="text" id="vorname" name="vorname" placeholder="Max" required>
                         </div>
                         <div class="form-group">
-                            <label for="nachname"><span class="form-icon">👤</span>Nachname <span class="required">*</span></label>
+                            <label for="nachname"><span class="form-icon"></span>Nachname <span class="required">*</span></label>
                             <input type="text" id="nachname" name="nachname" placeholder="Mustermann" required>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="email"><span class="form-icon">✉️</span>E-Mail <span class="required">*</span></label>
+                            <label for="email"><span class="form-icon"></span>E-Mail <span class="required">*</span></label>
                             <input type="email" id="email" name="email" placeholder="max@beispiel.de" required>
                         </div>
                         <div class="form-group">
-                            <label for="telefon"><span class="form-icon">📱</span>Telefon</label>
+                            <label for="telefon"><span class="form-icon"></span>Telefon</label>
                             <input type="tel" id="telefon" name="telefon" placeholder="+49 123 456789">
                         </div>
                     </div>
@@ -239,23 +239,23 @@
                         <label for="eventtyp"><span class="form-icon">🎉</span>Event-Typ <span class="required">*</span></label>
                         <select id="eventtyp" name="eventtyp" required>
                             <option value="">Bitte wählen...</option>
-                            <option value="hochzeit">💒 Hochzeit</option>
-                            <option value="konzert">🎵 Konzert</option>
-                            <option value="firmenfeier">🏢 Firmenfeier</option>
-                            <option value="messe">🎪 Messe</option>
-                            <option value="festival">🎭 Festival</option>
-                            <option value="privatfeier">🎊 Privatfeier</option>
-                            <option value="sonstiges">📋 Sonstiges</option>
+                            <option value="hochzeit"> Hochzeit</option>
+                            <option value="konzert"> Konzert</option>
+                            <option value="firmenfeier"> Firmenfeier</option>
+                            <option value="messe"> Messe</option>
+                            <option value="festival"> Festival</option>
+                            <option value="privatfeier"> Privatfeier</option>
+                            <option value="sonstiges"> Sonstiges</option>
                         </select>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="datum"><span class="form-icon">📅</span>Veranstaltungsdatum <span class="required">*</span></label>
+                            <label for="datum"><span class="form-icon"></span>Veranstaltungsdatum <span class="required">*</span></label>
                             <input type="date" id="datum" name="datum" required>
                         </div>
                         <div class="form-group">
-                            <label for="ort"><span class="form-icon">📍</span>Veranstaltungsort</label>
+                            <label for="ort"><span class="form-icon"></span>Veranstaltungsort</label>
                             <input type="text" id="ort" name="ort" placeholder="Berlin, Deutschland">
                         </div>
                     </div>
@@ -269,11 +269,9 @@
                             <label for="leistungen"><span class="form-icon">🎬</span>Gewünschte Leistungen</label>
                             <select id="leistungen" name="leistungen">
                                 <option value="">Bitte wählen...</option>
-                                <option value="tontechnik">🎤 Tontechnik</option>
-                                <option value="lichttechnik">💡 Lichttechnik</option>
-                                <option value="buehne">🎭 Bühnentechnik</option>
-                                <option value="video">📹 Videotechnik</option>
-                                <option value="komplett">📦 Komplettpaket</option>
+                                <option value="lichttechnik"> Lichttechnik</option>
+                                <option value="video"> Videotechnik</option>
+                                <option value="licht-und-video"> Licht- und Videotechnik</option>
                             </select>
                         </div>
                     </div>
@@ -286,7 +284,7 @@
                     <button type="submit" class="submit-button">🚀 Anfrage absenden</button>
                     
                     <div id="successMessage" class="success-message">
-                        <h3>✅ Vielen Dank für Ihre Anfrage!</h3>
+                        <h3> Vielen Dank für Ihre Anfrage!</h3>
                         <p>Wir haben Ihre Nachricht erhalten und werden uns schnellstmöglich bei Ihnen melden.</p>
                     </div>
                 </form>
@@ -295,16 +293,17 @@
         </main>
 
         <footer>
-            <p>&copy; 2026 Event VT | <a href="#">Impressum</a> | <a href="#">Datenschutz</a></p>
+            <p>&copy; 2026 Event VT | <a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a> | <button type="button" class="footer-consent-link" data-open-consent>Cookie-Einstellungen</button></p>
         </footer>
     </div>
 
     <script src="./config.js"></script>
+    <script src="./consent.js"></script>
     <script src="./main.js"></script>
     <script>
         // Prüfe ob Anfrage-Service im Wartungsmodus ist
         window.checkMaintenanceMode('anfrage');
-        document.getElementById('anfrageForm').addEventListener('submit', function(e) {
+        document.getElementById('anfrageForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // Formular-Daten sammeln
@@ -321,17 +320,23 @@
                 nachricht: document.getElementById('nachricht').value
             };
 
-            // Hier würde normalerweise die Daten an den Server gesendet
-            console.log('Anfrage gesendet:', formData);
-            
-            // Erfolgsmeldung anzeigen
             const successMsg = document.getElementById('successMessage');
-            successMsg.classList.add('show');
-            
-            // Formular zurücksetzen
-            this.reset();
-            
-            // Nach 5 Sekunden Nachricht ausblenden
+
+            try {
+                await window.apiCall('/api/anfragen', {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+
+                successMsg.innerHTML = '<h3>Vielen Dank fuer Ihre Anfrage!</h3><p>Wir haben Ihre Nachricht erhalten und melden uns schnellstmoeglich.</p>';
+                successMsg.classList.add('show');
+                this.reset();
+            } catch (error) {
+                console.error('Fehler beim Senden der Anfrage:', error);
+                successMsg.innerHTML = '<h3>Senden fehlgeschlagen</h3><p>Bitte versuche es erneut oder kontaktiere uns direkt per E-Mail.</p>';
+                successMsg.classList.add('show');
+            }
+
             setTimeout(() => {
                 successMsg.classList.remove('show');
             }, 5000);

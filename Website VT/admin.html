@@ -148,6 +148,37 @@
             margin-top: 20px;
         }
 
+        .list-controls {
+            margin-top: 14px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .table-toggle-button {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: #f4f4f4;
+            padding: 10px 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .table-toggle-button:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .cell-truncate {
+            display: inline-block;
+            max-width: 460px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: bottom;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -249,6 +280,29 @@
         .service-card:hover {
             background: rgba(0, 0, 0, 0.3);
             border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .image-field {
+            display: grid;
+            gap: 10px;
+        }
+
+        .image-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .image-controls input[type="text"] {
+            flex: 1;
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 148px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(0, 0, 0, 0.25);
+            object-fit: cover;
         }
 
         .maintenance-section {
@@ -677,6 +731,9 @@
                             <tbody id="recent-visits"></tbody>
                         </table>
                     </div>
+                    <div class="list-controls">
+                        <button id="toggle-visits" class="table-toggle-button" type="button" hidden>Mehr anzeigen</button>
+                    </div>
                 </div>
 
                 <div class="panel">
@@ -715,6 +772,9 @@
                             </thead>
                             <tbody id="recent-social"></tbody>
                         </table>
+                    </div>
+                    <div class="list-controls">
+                        <button id="toggle-social" class="table-toggle-button" type="button" hidden>Mehr anzeigen</button>
                     </div>
                 </div>
 
@@ -806,76 +866,103 @@
 
                         <div class="form-row" style="margin-top: 20px;">
                             <label for="homeHero">Hero Bild (Home)</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input id="homeHero" name="homeHero" type="text" placeholder="https://..." style="flex: 1;">
-                                <input type="file" id="homeHero-file" accept="image/*" style="display: none;">
-                                <button type="button" class="admin-button" onclick="document.getElementById('homeHero-file').click()">Upload</button>
+                            <div class="image-field">
+                                <div class="image-controls">
+                                    <input id="homeHero" name="homeHero" type="text" placeholder="https://..." style="flex: 1;">
+                                    <input type="file" id="homeHero-file" accept="image/*" style="display: none;">
+                                    <button type="button" class="admin-button upload-trigger" data-target-input="homeHero-file">Upload</button>
+                                </div>
+                                <img id="homeHero-preview" class="image-preview" alt="Vorschau Hero Home" loading="lazy">
                             </div>
                         </div>
                         <div class="form-row">
                             <label for="anfrageHero">Hero Bild (Anfrage)</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input id="anfrageHero" name="anfrageHero" type="text" placeholder="https://..." style="flex: 1;">
-                                <input type="file" id="anfrageHero-file" accept="image/*" style="display: none;">
-                                <button type="button" class="admin-button" onclick="document.getElementById('anfrageHero-file').click()">Upload</button>
+                            <div class="image-field">
+                                <div class="image-controls">
+                                    <input id="anfrageHero" name="anfrageHero" type="text" placeholder="https://..." style="flex: 1;">
+                                    <input type="file" id="anfrageHero-file" accept="image/*" style="display: none;">
+                                    <button type="button" class="admin-button upload-trigger" data-target-input="anfrageHero-file">Upload</button>
+                                </div>
+                                <img id="anfrageHero-preview" class="image-preview" alt="Vorschau Hero Anfrage" loading="lazy">
                             </div>
                         </div>
                         <div class="form-row">
                             <label for="mietenHero">Hero Bild (Mietportal)</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input id="mietenHero" name="mietenHero" type="text" placeholder="https://..." style="flex: 1;">
-                                <input type="file" id="mietenHero-file" accept="image/*" style="display: none;">
-                                <button type="button" class="admin-button" onclick="document.getElementById('mietenHero-file').click()">Upload</button>
+                            <div class="image-field">
+                                <div class="image-controls">
+                                    <input id="mietenHero" name="mietenHero" type="text" placeholder="https://..." style="flex: 1;">
+                                    <input type="file" id="mietenHero-file" accept="image/*" style="display: none;">
+                                    <button type="button" class="admin-button upload-trigger" data-target-input="mietenHero-file">Upload</button>
+                                </div>
+                                <img id="mietenHero-preview" class="image-preview" alt="Vorschau Hero Mietportal" loading="lazy">
                             </div>
                         </div>
 
                         <div class="settings-grid" style="margin-top: 20px;">
                             <div class="form-row">
-                                <label for="service0">Service Bild 1</label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input id="service0" name="service0" type="text" placeholder="https://..." style="flex: 1;">
-                                    <input type="file" id="service0-file" accept="image/*" style="display: none;">
-                                    <button type="button" class="admin-button" onclick="document.getElementById('service0-file').click()" style="padding: 8px 16px;">⬆</button>
+                                <label for="service0">Lichttechnik Bild</label>
+                                <div class="image-field">
+                                    <div class="image-controls">
+                                        <input id="service0" name="service0" type="text" placeholder="https://..." style="flex: 1;">
+                                        <input type="file" id="service0-file" accept="image/*" style="display: none;">
+                                        <button type="button" class="admin-button upload-trigger" data-target-input="service0-file" style="padding: 8px 16px;">⬆</button>
+                                    </div>
+                                    <img id="service0-preview" class="image-preview" alt="Vorschau Service 1" loading="lazy">
                                 </div>
                             </div>
                             <div class="form-row">
-                                <label for="service1">Service Bild 2</label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input id="service1" name="service1" type="text" placeholder="https://..." style="flex: 1;">
-                                    <input type="file" id="service1-file" accept="image/*" style="display: none;">
-                                    <button type="button" class="admin-button" onclick="document.getElementById('service1-file').click()" style="padding: 8px 16px;">⬆</button>
+                                <label for="service1">Videotechnik Bild</label>
+                                <div class="image-field">
+                                    <div class="image-controls">
+                                        <input id="service1" name="service1" type="text" placeholder="https://..." style="flex: 1;">
+                                        <input type="file" id="service1-file" accept="image/*" style="display: none;">
+                                        <button type="button" class="admin-button upload-trigger" data-target-input="service1-file" style="padding: 8px 16px;">⬆</button>
+                                    </div>
+                                    <img id="service1-preview" class="image-preview" alt="Vorschau Service 2" loading="lazy">
                                 </div>
                             </div>
                             <div class="form-row">
-                                <label for="service2">Service Bild 3</label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input id="service2" name="service2" type="text" placeholder="https://..." style="flex: 1;">
-                                    <input type="file" id="service2-file" accept="image/*" style="display: none;">
-                                    <button type="button" class="admin-button" onclick="document.getElementById('service2-file').click()" style="padding: 8px 16px;">⬆</button>
+                                <label for="service2">Bildregie Bild</label>
+                                <div class="image-field">
+                                    <div class="image-controls">
+                                        <input id="service2" name="service2" type="text" placeholder="https://..." style="flex: 1;">
+                                        <input type="file" id="service2-file" accept="image/*" style="display: none;">
+                                        <button type="button" class="admin-button upload-trigger" data-target-input="service2-file" style="padding: 8px 16px;">⬆</button>
+                                    </div>
+                                    <img id="service2-preview" class="image-preview" alt="Vorschau Service 3" loading="lazy">
                                 </div>
                             </div>
                             <div class="form-row">
-                                <label for="service3">Service Bild 4</label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input id="service3" name="service3" type="text" placeholder="https://..." style="flex: 1;">
-                                    <input type="file" id="service3-file" accept="image/*" style="display: none;">
-                                    <button type="button" class="admin-button" onclick="document.getElementById('service3-file').click()" style="padding: 8px 16px;">⬆</button>
+                                <label for="service3">Eventfläche Bild</label>
+                                <div class="image-field">
+                                    <div class="image-controls">
+                                        <input id="service3" name="service3" type="text" placeholder="https://..." style="flex: 1;">
+                                        <input type="file" id="service3-file" accept="image/*" style="display: none;">
+                                        <button type="button" class="admin-button upload-trigger" data-target-input="service3-file" style="padding: 8px 16px;">⬆</button>
+                                    </div>
+                                    <img id="service3-preview" class="image-preview" alt="Vorschau Service 4" loading="lazy">
                                 </div>
                             </div>
                             <div class="form-row">
-                                <label for="service4">Service Bild 5</label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input id="service4" name="service4" type="text" placeholder="https://..." style="flex: 1;">
-                                    <input type="file" id="service4-file" accept="image/*" style="display: none;">
-                                    <button type="button" class="admin-button" onclick="document.getElementById('service4-file').click()" style="padding: 8px 16px;">⬆</button>
+                                <label for="service4">Bühnentechnik Bild</label>
+                                <div class="image-field">
+                                    <div class="image-controls">
+                                        <input id="service4" name="service4" type="text" placeholder="https://..." style="flex: 1;">
+                                        <input type="file" id="service4-file" accept="image/*" style="display: none;">
+                                        <button type="button" class="admin-button upload-trigger" data-target-input="service4-file" style="padding: 8px 16px;">⬆</button>
+                                    </div>
+                                    <img id="service4-preview" class="image-preview" alt="Vorschau Service 5" loading="lazy">
                                 </div>
                             </div>
                             <div class="form-row">
-                                <label for="service5">Service Bild 6</label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input id="service5" name="service5" type="text" placeholder="https://..." style="flex: 1;">
-                                    <input type="file" id="service5-file" accept="image/*" style="display: none;">
-                                    <button type="button" class="admin-button" onclick="document.getElementById('service5-file').click()" style="padding: 8px 16px;">⬆</button>
+                                <label for="service5">Showtechnik Bild</label>
+                                <div class="image-field">
+                                    <div class="image-controls">
+                                        <input id="service5" name="service5" type="text" placeholder="https://..." style="flex: 1;">
+                                        <input type="file" id="service5-file" accept="image/*" style="display: none;">
+                                        <button type="button" class="admin-button upload-trigger" data-target-input="service5-file" style="padding: 8px 16px;">⬆</button>
+                                    </div>
+                                    <img id="service5-preview" class="image-preview" alt="Vorschau Service 6" loading="lazy">
                                 </div>
                             </div>
                         </div>

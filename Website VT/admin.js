@@ -1,4 +1,5 @@
 const TOKEN_KEY = "eventVT_admin_token";
+const COLLAPSED_ROW_COUNT = 8;
 
 // Bestimme API URL basierend auf aktueller Domain
 const API_BASE_URL = (() => {
@@ -45,7 +46,7 @@ const DEFAULT_SETTINGS = {
         bg3: "#24243e"
     },
     images: {
-        homeHero: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&q=80",
+        homeHero: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=2200&q=90",
         anfrageHero: "https://images.unsplash.com/photo-1478147427282-58a87a120781?w=1920&q=80",
         mietenHero: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1920&q=80",
         service: [
@@ -81,6 +82,7 @@ const elements = {
     deleteStats: document.getElementById("delete-stats"),
     logout: document.getElementById("logout"),
     recentVisits: document.getElementById("recent-visits"),
+    toggleVisits: document.getElementById("toggle-visits"),
     settingsForm: document.getElementById("settings-form"),
     settingsStatus: document.getElementById("settings-status"),
     maintenanceForm: document.getElementById("maintenance-form"),
@@ -93,10 +95,52 @@ const elements = {
     refreshSocial: document.getElementById("refresh-social"),
     deleteSocial: document.getElementById("delete-social"),
     recentSocial: document.getElementById("recent-social"),
+    toggleSocial: document.getElementById("toggle-social"),
     previewIframe: document.getElementById("preview-iframe")
 };
 
 let visitsChartInstance = null;
+let visitsExpanded = false;
+let socialExpanded = false;
+let latestVisits = [];
+let latestSocialClicks = [];
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function compactText(value, maxLength = 95) {
+    const raw = typeof value === "string" ? value : "";
+    if (!raw) {
+        return "-";
+    }
+
+    if (raw.length <= maxLength) {
+        return raw;
+    }
+
+    return `${raw.slice(0, maxLength - 1)}…`;
+}
+
+function updateTableToggle(button, totalRows, expanded) {
+    if (!button) {
+        return;
+    }
+
+    if (totalRows <= COLLAPSED_ROW_COUNT) {
+        button.hidden = true;
+        return;
+    }
+
+    button.hidden = false;
+    const hiddenRows = totalRows - COLLAPSED_ROW_COUNT;
+    button.textContent = expanded ? "Weniger anzeigen" : `Mehr anzeigen (${hiddenRows})`;
+}
 
 function showStatus(element, message, isError) {
     if (!element) {
@@ -120,6 +164,59 @@ function normalizeSettings(settings) {
             }
         }
     };
+}
+
+function resolvePreviewUrl(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== "string") {
+        return "";
+    }
+
+    const trimmed = rawUrl.trim();
+    if (!trimmed) {
+        return "";
+    }
+
+    if (
+        trimmed.startsWith("http://") ||
+        trimmed.startsWith("https://") ||
+        trimmed.startsWith("data:") ||
+        trimmed.startsWith("blob:")
+    ) {
+        return trimmed;
+    }
+
+    if (trimmed.startsWith("/")) {
+        return `${API_BASE_URL}${trimmed}`;
+    }
+
+    return `${API_BASE_URL}/${trimmed}`;
+}
+
+function setPreviewImage(previewId, rawUrl) {
+    const image = document.getElementById(previewId);
+    if (!image) {
+        return;
+    }
+
+    const resolved = resolvePreviewUrl(rawUrl);
+    if (!resolved) {
+        image.removeAttribute("src");
+        image.style.visibility = "hidden";
+        return;
+    }
+
+    image.src = resolved;
+    image.style.visibility = "visible";
+}
+
+function updateImagePreviews() {
+    setPreviewImage("homeHero-preview", document.getElementById("homeHero")?.value);
+    setPreviewImage("anfrageHero-preview", document.getElementById("anfrageHero")?.value);
+    setPreviewImage("mietenHero-preview", document.getElementById("mietenHero")?.value);
+
+    for (let i = 0; i < 6; i += 1) {
+        setPreviewImage(`service${i}-preview`, document.getElementById(`service${i}`)?.value);
+    }
 }
 
 function setView(isLoggedIn) {
@@ -147,7 +244,7 @@ async function apiFetch(path, options = {}) {
 }
 
 async function login(password) {
-    const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/admin/login`, {  
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password })
@@ -232,6 +329,7 @@ function fillSettingsForm(settings) {
     
     // Update preview
     updateMaintenancePreview();
+    updateImagePreviews();
 }
 
 function readSettingsForm() {
@@ -273,7 +371,13 @@ async function uploadImage(file) {
     }
 
     const payload = await response.json();
-    return payload.url;
+    const rawUrl = payload?.url || "";
+
+    if (typeof rawUrl === "string" && rawUrl.startsWith("/")) {
+        return `${API_BASE_URL}${rawUrl}`;
+    }
+
+    return rawUrl;
 }
 
 function setupFileUploadHandlers() {
@@ -305,13 +409,59 @@ function setupFileUploadHandlers() {
                 showStatus(elements.settingsStatus, "Lade Bild hoch...", false);
                 const url = await uploadImage(file);
                 targetInput.value = url;
-                showStatus(elements.settingsStatus, "Bild hochgeladen! Vergiss nicht zu speichern.", false);
+
+                const saveResponse = await apiFetch("/api/admin/settings", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(readSettingsForm())
+                });
+
+                if (!saveResponse.ok) {
+                    throw new Error("Save after upload failed");
+                }
+
+                const savePayload = await saveResponse.json();
+                fillSettingsForm(savePayload.settings || DEFAULT_SETTINGS);
+                updateImagePreviews();
+                showStatus(elements.settingsStatus, "Bild hochgeladen und gespeichert.", false);
             } catch (error) {
                 showStatus(elements.settingsStatus, "Upload fehlgeschlagen.", true);
             }
             
             fileInput.value = "";
         });
+    });
+}
+
+function setupUploadButtons() {
+    document.querySelectorAll('.upload-trigger').forEach((button) => {
+        button.addEventListener('click', () => {
+            const targetInputId = button.dataset.targetInput;
+            if (!targetInputId) {
+                return;
+            }
+
+            const fileInput = document.getElementById(targetInputId);
+            if (!fileInput) {
+                return;
+            }
+
+            fileInput.click();
+        });
+    });
+}
+
+function setupImageInputListeners() {
+    const ids = ["homeHero", "anfrageHero", "mietenHero", "service0", "service1", "service2", "service3", "service4", "service5"];
+
+    ids.forEach((id) => {
+        const input = document.getElementById(id);
+        if (!input) {
+            return;
+        }
+
+        input.addEventListener("input", updateImagePreviews);
+        input.addEventListener("change", updateImagePreviews);
     });
 }
 
@@ -378,26 +528,39 @@ async function renderChart() {
 }
 
 function renderVisits(recent) {
+    latestVisits = Array.isArray(recent) ? recent : [];
     elements.recentVisits.innerHTML = "";
-    if (!Array.isArray(recent) || recent.length === 0) {
+    if (latestVisits.length === 0) {
         const row = document.createElement("tr");
         row.innerHTML = "<td colspan=\"5\">Noch keine Besuche vorhanden.</td>";
         elements.recentVisits.appendChild(row);
+        updateTableToggle(elements.toggleVisits, 0, visitsExpanded);
         return;
     }
 
-    recent.forEach((visit) => {
+    const visibleRows = visitsExpanded
+        ? latestVisits
+        : latestVisits.slice(0, COLLAPSED_ROW_COUNT);
+
+    visibleRows.forEach((visit) => {
         const row = document.createElement("tr");
         const time = visit.created_at ? new Date(visit.created_at).toLocaleString("de-DE") : "-";
+        const path = visit.path || "-";
+        const ip = visit.ip || "-";
+        const referrer = visit.referrer || "-";
+        const userAgent = visit.user_agent || "-";
+
         row.innerHTML = `
-            <td>${time}</td>
-            <td>${visit.path || "-"}</td>
-            <td>${visit.ip || "-"}</td>
-            <td>${visit.referrer || "-"}</td>
-            <td>${visit.user_agent || "-"}</td>
+            <td>${escapeHtml(time)}</td>
+            <td title="${escapeHtml(path)}"><span class="cell-truncate">${escapeHtml(compactText(path))}</span></td>
+            <td>${escapeHtml(ip)}</td>
+            <td title="${escapeHtml(referrer)}"><span class="cell-truncate">${escapeHtml(compactText(referrer))}</span></td>
+            <td title="${escapeHtml(userAgent)}"><span class="cell-truncate">${escapeHtml(compactText(userAgent, 120))}</span></td>
         `;
         elements.recentVisits.appendChild(row);
     });
+
+    updateTableToggle(elements.toggleVisits, latestVisits.length, visitsExpanded);
 }
 
 async function loadSummary() {
@@ -422,16 +585,22 @@ async function loadSummary() {
 
 function renderSocialClicks(recent) {
     if (!elements.recentSocial) return;
+    latestSocialClicks = Array.isArray(recent) ? recent : [];
     
     elements.recentSocial.innerHTML = "";
-    if (!Array.isArray(recent) || recent.length === 0) {
+    if (latestSocialClicks.length === 0) {
         const row = document.createElement("tr");
         row.innerHTML = "<td colspan=\"4\">Noch keine Social Media Klicks vorhanden.</td>";
         elements.recentSocial.appendChild(row);
+        updateTableToggle(elements.toggleSocial, 0, socialExpanded);
         return;
     }
 
-    recent.forEach((click) => {
+    const visibleRows = socialExpanded
+        ? latestSocialClicks
+        : latestSocialClicks.slice(0, COLLAPSED_ROW_COUNT);
+
+    visibleRows.forEach((click) => {
         const row = document.createElement("tr");
         const time = click.created_at ? new Date(click.created_at).toLocaleString("de-DE") : "-";
         const platformEmoji = {
@@ -441,15 +610,30 @@ function renderSocialClicks(recent) {
             other: "🔗"
         };
         const emoji = platformEmoji[click.platform] || "🔗";
+        const platform = click.platform || "-";
+        const ip = click.ip || "-";
+        const userAgent = click.user_agent || "-";
         
         row.innerHTML = `
-            <td>${time}</td>
-            <td>${emoji} ${click.platform || "-"}</td>
-            <td>${click.ip || "-"}</td>
-            <td>${click.user_agent || "-"}</td>
+            <td>${escapeHtml(time)}</td>
+            <td>${escapeHtml(`${emoji} ${platform}`)}</td>
+            <td>${escapeHtml(ip)}</td>
+            <td title="${escapeHtml(userAgent)}"><span class="cell-truncate">${escapeHtml(compactText(userAgent, 120))}</span></td>
         `;
         elements.recentSocial.appendChild(row);
     });
+
+    updateTableToggle(elements.toggleSocial, latestSocialClicks.length, socialExpanded);
+}
+
+function handleToggleVisits() {
+    visitsExpanded = !visitsExpanded;
+    renderVisits(latestVisits);
+}
+
+function handleToggleSocial() {
+    socialExpanded = !socialExpanded;
+    renderSocialClicks(latestSocialClicks);
 }
 
 async function loadSocialSummary() {
@@ -751,6 +935,12 @@ async function init() {
     if (elements.deleteSocial) {
         elements.deleteSocial.addEventListener("click", handleDeleteSocial);
     }
+    if (elements.toggleVisits) {
+        elements.toggleVisits.addEventListener("click", handleToggleVisits);
+    }
+    if (elements.toggleSocial) {
+        elements.toggleSocial.addEventListener("click", handleToggleSocial);
+    }
     if (elements.logout) {
         elements.logout.addEventListener("click", handleLogout);
     }
@@ -781,7 +971,9 @@ async function init() {
         }
     });
 
+    setupUploadButtons();
     setupFileUploadHandlers();
+    setupImageInputListeners();
 
     if (!getToken()) {
         setView(false);

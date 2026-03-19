@@ -145,12 +145,12 @@ class ChatWidget {
     }
 
     setLoading(isLoading) {
-        this.isLoading = isLoading;
+        this.isLoading = isLoading;         // Disable/enable input and send button
         if (this.chatSend) {
             this.chatSend.disabled = isLoading;
         }
         if (this.chatInput) {
-            this.chatInput.disabled = isLoading;
+            this.chatInput.disabled = isLoading;        // Optionally add a CSS class to indicate
         }
     }
 }

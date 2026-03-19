@@ -87,7 +87,7 @@ window.showMaintenanceMessage = (message) => {
         top: 0;
         left: 0;
         right: 0;
-        background: linear-gradient(135deg, #ff4d4d, #ff6b6b);
+        background: linear-gradient(135deg, #b97f24, #d4a257);
         color: white;
         padding: 16px;
         text-align: center;
