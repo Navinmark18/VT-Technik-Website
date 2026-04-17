@@ -1,4 +1,6 @@
-# Event VT - Deployment Guide
+git add .
+git commit -m "Fix: Update für netcup"
+git push origin main# Event VT - Deployment Guide
 
 ## 🎯 STEP 1: GitHub Repo erstellen (2 Min)
 ```bash
