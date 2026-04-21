@@ -1,35 +1,34 @@
-# Dependencies
+# Dependenciesnode_modules/        → Alle npm Packages (riesig! ~500MB+)
+npm-debug.log        → Debug Logs
+yarn-error.log       → Yarn Fehler
 node_modules/
-npm-debug.log
-yarn-error.log
 
 # Environment variables
-.env
-.env.local
-.env.*.local
+..env                 → Passwörter, API Keys
+.env.local           → Locale Secrets
+.env.*.local         → Environment-spezifische Secrets
 
 # Build outputs
-dist/
-build/
-*.tsbuildinfo
+ddist/                → Vite/Webpack Output
+build/               → Build Ordner
+*.tsbuildinfo        → TypeScript Cache
 
 # SQLite databases and journals
-*.sqlite
-*.sqlite-*
-*.db
+*.sqlite             → Datenbank Dateien
+*.sqlite-*           → Datenbank Backups
+*.db                 → Andere Datenbanken
 *.db-*
 
 # IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+.vscode/             → VS Code Settings
+.idea/               → PyCharm/IntelliJ Settings
+*.swp, *.swo, *~     → Editor Temp-Dateien
 *~
 
 # OS
-.DS_Store
-Thumbs.db
+.DS_Store            → macOS Dateien
+Thumbs.db            → Windows Dateien
 
 # Misc
-.cache/
-.turbo/
+.cache/              → Cache Dateien
+.turbo/              → Turbo Build Cache

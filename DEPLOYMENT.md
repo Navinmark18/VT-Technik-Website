@@ -95,6 +95,8 @@ git add .              # Änderungen sammeln
 git commit -m "Text"   # Speichern mit Nachricht
 git push origin main   # Hochladen
 
+git clone "Repo"
+
 
 ## Netcup pull von Repo
 git pull origin main
@@ -102,3 +104,29 @@ git pull origin main
 ## Webiste STarte Befehl
 "Wichtig verzeichnis auswählen dann Befhel ausführen"
 npm run dev
+
+
+# Git Remote Beispiel-Konfiguration für Netcup
+# Diese Datei zeigt, wie man mehrere Remotes konfiguriert
+
+# Netcup-Remote hinzufügen:
+git remote add netcup ssh://root@v2202604351464450889/root/repositories/event-vt.git
+
+# Oder mit deiner echten Domain:
+git remote add netcup ssh://root@example-domain.netcup.com/root/repositories/event-vt.git
+
+# Alle Remotes checken:
+git remote -v
+
+# Zu Netcup pushen:
+git push netcup main
+
+# Zu GitHub pushen (standard):
+git push origin main
+
+# Zu beiden gleichzeitig pushen:
+git push --all
+
+# Oder einzeln:
+git push origin main
+git push netcup main
