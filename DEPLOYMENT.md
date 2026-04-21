@@ -82,3 +82,9 @@ CORS_ORIGIN=https://deine-vercel-url.vercel.app
 **Handy: "Verbindung zurückgewiesen"?**
 - Railway URL öffentlich? Check: `curl https://railway-url/api/settings`
 
+
+
+
+## Push bei Netcup
+cd ~
+git clone https://Navinmark18:DEIN_TOKEN@github.com/Navinmark18/VT-Technik-Webiste.git    
