@@ -130,3 +130,19 @@ git push --all
 # Oder einzeln:
 git push origin main
 git push netcup main
+
+
+## wenn POrt Belegt, Prozess killen
+lsof -i :4000      # Zeig mir was läuft
+kill -9 <PID>      # Killen
+npm run dev         # Erneut starten
+
+## Backend auf amdete port startem
+PORT=5000 npm run dev
+# oder in .env setzen:
+echo "PORT=5000" >> .env
+npm run dev
+
+## Alle Node Prozesse killen
+killall node
+npm run dev

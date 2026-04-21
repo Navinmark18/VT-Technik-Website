@@ -1,4 +1,15 @@
-{
+# BFG installieren (falls nicht vorhanden)
+brew install bfg  # oder auf Linux: apt install bfg
+
+# Repository clonen (Backup)
+git clone --mirror https://github.com/Navinmark18/VT-Technik-Webiste.git
+cd VT-Technik-Webiste.git
+
+# Dateien aus History löschen
+bfg --delete-files "Website\ VT" --delete-files "Projekt_Spiel"
+
+# Pushen
+git push --force{
     "tasks": [
         {
             "type": "cppbuild",
