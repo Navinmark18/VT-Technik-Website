@@ -150,6 +150,33 @@ npm run dev
 
 ## 🔄 Alternativen:
 Befehl	Was es macht
-git pull   	Holt + merged automatisch
+git pull   	Holt + merged automatisch  //Im Verzeichnis
 git fetch	Lädt nur herunter (kein merge)
 git merge origin/main	Nur merge (nach fetch)
+
+
+## npm Konfig
+killall -9 node         All Laufenden Dateien stoppen
+pm2 delete all   /pm2 delete (id)       ALLE KILLEN/Gewisse branchen
+pm2 start npm --name "vt-backend" -- run dev          // Wichtig gehe ins Verzeichnis
+pm2 start npm --name "vt-frontend" -- run dev
+
+## pm2 logs
+pm2 logs vt-frontend --lines 20
+pm2 logs vt-backend --lines 20
+
+## Falls Backend net läauft port frei mache
+fuser -k 4000/tcp
+
+
+
+# Ins Backend-Verzeichnis und starten
+cd ~/VT-Technik-Webiste/Website\ VT-T/backend
+pm2 start src/server.js --name "vt-backend"
+
+# Ins Frontend-Verzeichnis und starten
+cd ~/VT-Technik-Webiste/Website\ VT-T/Website\ VT
+pm2 start npm --name "vt-frontend" -- run dev
+
+pm2 save    //speichert das ws gestarte wurde
+pm2 startup  //Auto startup
