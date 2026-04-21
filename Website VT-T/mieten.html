@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mietportal - Event VT</title>
+    <link rel="stylesheet" href="./src/style.css">
+    <style>
+        /* Mietportal-spezifische Styles - Modern */
+        .rental-header {
+            position: relative;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), var(--mieten-hero-image) center/cover no-repeat;
+            padding: 80px 5% 60px;
+            text-align: center;
+        }
+
+        .rental-header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+        }
+
+        .rental-header p {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 30px;
+        }
+
+        .search-bar {
+            max-width: 700px;
+            margin: 30px auto 0;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 18px 25px;
+            font-size: 1.1rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: white;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-bar input:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 25px rgba(var(--accent-rgb), 0.3);
+        }
+
+        .filters {
+            padding: 40px 5%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .filter-btn {
+            padding: 12px 28px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-btn:hover {
+            background: rgba(var(--accent-rgb), 0.2);
+            border-color: rgba(var(--accent-rgb), 0.5);
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.4);
+        }
+
+        .products-section {
+            padding: 80px 5%;
+        }
+
+        .products-section h2 {
+            text-align: center;
+            margin-bottom: 50px;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 35px;
+            margin-top: 40px;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(var(--accent-rgb), 0.3);
+            border-color: rgba(var(--accent-rgb), 0.5);
+        }
+
+        .product-image {
+            height: 220px;
+            background: linear-gradient(135deg, #333, #222);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 100%);
+        }
+
+        .product-info {
+            padding: 25px;
+        }
+
+        .product-category {
+            color: var(--accent);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .product-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: white;
+        }
+
+        .product-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            margin-bottom: 18px;
+            line-height: 1.6;
+        }
+
+        .product-price {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            margin-bottom: 18px;
+        }
+
+        .product-price span {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .add-to-cart-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.05rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3);
+        }
+
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(var(--accent-rgb), 0.5);
+        }
+
+        /* Seitlicher Warenkorb-Balken */
+        .side-cart-bar {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: white;
+            padding: 25px 12px;
+            border-radius: 15px 0 0 15px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: -5px 0 25px rgba(var(--accent-rgb), 0.5);
+            transition: all 0.3s ease;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .side-cart-bar:hover {
+            padding-right: 18px;
+            box-shadow: -8px 0 35px rgba(var(--accent-rgb), 0.7);
+        }
+
+        .side-cart-bar .cart-count {
+            display: inline-block;
+            background: white;
+            color: var(--accent);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            margin-left: 12px;
+            writing-mode: horizontal-tb;
+            font-weight: 800;
+        }
+
+        .cart-icon {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: white;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(var(--accent-rgb), 0.5);
+            z-index: 900;
+            transition: all 0.3s ease;
+        }
+
+        .cart-icon:hover {
+            transform: scale(1.15);
+            box-shadow: 0 12px 35px rgba(var(--accent-rgb), 0.7);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: white;
+            color: var(--accent);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 800;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .cart-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cart-content {
+            background: rgba(34, 34, 34, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 650px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cart-header h2 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .close-cart {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-cart:hover {
+            background: rgba(var(--accent-rgb), 0.3);
+            transform: rotate(90deg);
+        }
+
+        .cart-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin-bottom: 18px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .cart-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(var(--accent-rgb), 0.3);
+        }
+
+        .cart-item-info h4 {
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .cart-item-price {
+            background: linear-gradient(135deg, var(--accent), var(--accent-3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        .remove-item {
+            background: rgba(var(--accent-rgb), 0.2);
+            border: 2px solid rgba(var(--accent-rgb), 0.5);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .remove-item:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .cart-total {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            text-align: right;
+        }
+
+        .cart-total h3 {
+            background: linear-gradient(135deg, var(--accent), var(--accent-3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(var(--accent-rgb), 0.4);
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(var(--accent-rgb), 0.6);
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-cart h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .rental-header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .rental-header p {
+                font-size: 1.1rem;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cart-icon {
+                bottom: 80px;
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <a href="index.html" style="text-decoration: none; color: inherit;">
+                <div class="logo">EVENT<span>VT</span></div>
+            </a>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="mieten.html">Mietportal</a>
+                <a href="Anfrage.html" class="btn-nav">Anfrage</a>
+            </nav>
+        </header>
+
+        <div class="rental-header">
+            <h1>🎵 Equipment Mietportal</h1>
+            <p>Professionelle Event-Technik zum Mieten</p>
+            
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Suche nach Equipment...">
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-category="alle">Alle</button>
+                <button class="filter-btn" data-category="licht">💡 Lichttechnik</button>
+                <button class="filter-btn" data-category="video">📹 Videotechnik</button>
+            </div>
+        </div>
+
+        <div class="products-section">
+            <h2 style="text-align: center; margin-bottom: 20px;">Verfügbares Equipment</h2>
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+
+        <footer>
+            <p>&copy; 2026 Event VT | <a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a> | <button type="button" class="footer-consent-link" data-open-consent>Cookie-Einstellungen</button> | <a href="admin.html">Admin Login</a></p>
+        </footer>
+    </div>
+
+    <!-- Seitlicher Warenkorb-Balken -->
+    <div class="side-cart-bar" id="sideCartBar">
+        🛒 WARENKORB <span class="cart-count" id="sideCartCount">0</span>
+    </div>
+
+    <!-- Warenkorb Icon -->
+    <div class="cart-icon" id="cartIcon">
+        🛒
+        <span class="cart-badge" id="cartBadge">0</span>
+    </div>
+
+    <!-- Warenkorb Modal -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>🛒 Warenkorb</h2>
+                <button class="close-cart" id="closeCart">&times;</button>
+            </div>
+            <div id="cartItems"></div>
+        </div>
+    </div>
+
+    <script src="./config.js"></script>
+    <script src="./consent.js"></script>
+    <script src="./main.js"></script>
+    <script>
+        // Prüfe ob Mietservice im Wartungsmodus ist
+        window.checkMaintenanceMode('mieten');
+        // Produktdaten
+        const allProducts = [
+            {
+                id: 1,
+                name: "JBL PRX825W",
+                category: "ton",
+                icon: "🔊",
+                description: "Aktiver PA-Lautsprecher mit 1500W, ideal für Konzerte und Events",
+                price: 89,
+                period: "pro Tag"
+            },
+            {
+                id: 2,
+                name: "Shure SM58",
+                category: "ton",
+                icon: "🎤",
+                description: "Professionelles dynamisches Gesangsmikrofon - der Klassiker",
+                price: 15,
+                period: "pro Tag"
+            },
+            {
+                id: 3,
+                name: "Yamaha MG16XU",
+                category: "ton",
+                icon: "🎛️",
+                description: "16-Kanal Mischpult mit USB-Interface und Effekten",
+                price: 65,
+                period: "pro Tag"
+            },
+            {
+                id: 4,
+                name: "Moving Head LED",
+                category: "licht",
+                icon: "💡",
+                description: "LED Moving Head mit 19x15W RGBW LEDs und DMX-Steuerung",
+                price: 55,
+                period: "pro Tag"
+            },
+            {
+                id: 5,
+                name: "LED Bar 240",
+                category: "licht",
+                icon: "🌈",
+                description: "RGB LED Leuchtleiste mit 240 LEDs für beeindruckende Lichteffekte",
+                price: 35,
+                period: "pro Tag"
+            },
+            {
+                id: 6,
+                name: "Nebelmaschine",
+                category: "licht",
+                icon: "🌫️",
+                description: "1500W Nebelmaschine mit Funkfernbedienung inkl. 5L Fluid",
+                price: 25,
+                period: "pro Tag"
+            },
+            {
+                id: 7,
+                name: "DMX Controller",
+                category: "licht",
+                icon: "🎮",
+                description: "192 Kanal DMX-Controller für professionelle Lichtsteuerung",
+                price: 45,
+                period: "pro Tag"
+            },
+            {
+                id: 8,
+                name: "Bühnenpodest 2x1m",
+                category: "buehne",
+                icon: "🎭",
+                description: "Höhenverstellbares Bühnenelement (40-60cm), TÜV geprüft",
+                price: 35,
+                period: "pro Tag"
+            },
+            {
+                id: 9,
+                name: "Traverse 2m",
+                category: "buehne",
+                icon: "🏗️",
+                description: "Aluminium-Traverse für Licht- und Sound-Equipment",
+                price: 20,
+                period: "pro Tag"
+            },
+            {
+                id: 10,
+                name: "Bühnenvorhang 3x4m",
+                category: "buehne",
+                icon: "🎪",
+                description: "Schwarzer Molton-Vorhang, schwer entflammbar",
+                price: 40,
+                period: "pro Tag"
+            },
+            {
+                id: 11,
+                name: "LED Videowand Panel",
+                category: "video",
+                icon: "📺",
+                description: "LED Panel 50x50cm, P3.9mm, modular erweiterbar",
+                price: 120,
+                period: "pro Tag"
+            },
+            {
+                id: 12,
+                name: "Projektor 5000 Lumen",
+                category: "video",
+                icon: "📽️",
+                description: "Full-HD Beamer mit 5000 ANSI Lumen, ideal für Präsentationen",
+                price: 75,
+                period: "pro Tag"
+            },
+            {
+                id: 13,
+                name: "Leinwand 3x2m",
+                category: "video",
+                icon: "🖼️",
+                description: "Mobile Stativ-Leinwand für Projektionen",
+                price: 30,
+                period: "pro Tag"
+            },
+            {
+                id: 14,
+                name: "Kabelset XLR",
+                category: "zubehoer",
+                icon: "🔌",
+                description: "Set mit 10x XLR-Kabel (5m-20m), professionelle Qualität",
+                price: 20,
+                period: "pro Tag"
+            },
+            {
+                id: 15,
+                name: "Stromverteiler 16A",
+                category: "zubehoer",
+                icon: "⚡",
+                description: "CEE Stromverteiler mit 6x Schuko, FI-Schutzschalter",
+                price: 25,
+                period: "pro Tag"
+            },
+            {
+                id: 16,
+                name: "Mikrofonständer Set",
+                category: "zubehoer",
+                icon: "🎙️",
+                description: "5x professionelle Mikrofonständer, höhenverstellbar",
+                price: 15,
+                period: "pro Tag"
+            },
+            {
+                id: 17,
+                name: "Subwoofer JBL PRX",
+                category: "ton",
+                icon: "📢",
+                description: "2000W aktiver Subwoofer für druckvolle Bässe",
+                price: 95,
+                period: "pro Tag"
+            },
+            {
+                id: 18,
+                name: "In-Ear Monitoring Set",
+                category: "ton",
+                icon: "🎧",
+                description: "Drahtloses In-Ear System für Musiker, 4 Empfänger",
+                price: 110,
+                period: "pro Tag"
+            }
+        ];
+
+        const products = allProducts.filter((product) =>
+            product.category === 'licht' || product.category === 'video'
+        );
+
+        // Warenkorb
+        let cart = JSON.parse(localStorage.getItem('eventVT_cart') || '[]');
+
+        // Produkte rendern
+        function renderProducts(filteredProducts = products) {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+
+            if (filteredProducts.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: #888; grid-column: 1/-1;">Keine Produkte gefunden.</p>';
+                return;
+            }
+
+            filteredProducts.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-image">${product.icon}</div>
+                    <div class="product-info">
+                        <div class="product-category">${getCategoryName(product.category)}</div>
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-description">${product.description}</div>
+                        <div class="product-price">€${product.price} <span>/ ${product.period}</span></div>
+                        <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
+                            In den Warenkorb
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                'licht': '💡 Lichttechnik',
+                'video': '📹 Videotechnik'
+            };
+            return names[category] || category;
+        }
+
+        // Filter
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const category = btn.dataset.category;
+                const filtered = category === 'alle' 
+                    ? products 
+                    : products.filter(p => p.category === category);
+                
+                renderProducts(filtered);
+            });
+        });
+
+        // Suche
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = products.filter(p => 
+                p.name.toLowerCase().includes(query) || 
+                p.description.toLowerCase().includes(query)
+            );
+            renderProducts(filtered);
+        });
+
+        // Warenkorb Funktionen
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
+
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+
+            saveCart();
+            updateCartBadge();
+            
+            // Kurzes Feedback
+            showNotification('✅ Zum Warenkorb hinzugefügt!');
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            saveCart();
+            updateCartBadge();
+            renderCart();
+        }
+
+        function saveCart() {
+            localStorage.setItem('eventVT_cart', JSON.stringify(cart));
+        }
+
+        function updateCartBadge() {
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cartBadge').textContent = totalItems;
+            document.getElementById('sideCartCount').textContent = totalItems;
+        }
+
+        function renderCart() {
+            const cartItemsDiv = document.getElementById('cartItems');
+            
+            if (cart.length === 0) {
+                cartItemsDiv.innerHTML = '<div class="empty-cart"><p>Dein Warenkorb ist leer</p></div>';
+                return;
+            }
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            cartItemsDiv.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <h4>${item.name}</h4>
+                        <p>Menge: ${item.quantity}x</p>
+                        <div class="cart-item-price">€${item.price * item.quantity}</div>
+                    </div>
+                    <button class="remove-item" onclick="removeFromCart(${item.id})">Entfernen</button>
+                </div>
+            `).join('') + `
+                <div class="cart-total">
+                    <h3>Gesamt: €${total}</h3>
+                    <button class="checkout-btn" onclick="checkout()">Anfrage senden</button>
+                </div>
+            `;
+        }
+
+        function checkout() {
+            if (cart.length === 0) return;
+            
+            const items = cart.map(item => `${item.quantity}x ${item.name} (€${item.price * item.quantity})`).join('\n');
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            alert(`Vielen Dank für Ihre Anfrage!\n\nGewählte Artikel:\n${items}\n\nGesamtpreis: €${total}\n\nWir werden uns in Kürze mit Ihnen in Verbindung setzen.`);
+            
+            cart = [];
+            saveCart();
+            updateCartBadge();
+            renderCart();
+            document.getElementById('cartModal').style.display = 'none';
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--accent);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }
+
+        // Cart Modal Events
+        document.getElementById('cartIcon').addEventListener('click', () => {
+            document.getElementById('cartModal').style.display = 'flex';
+            renderCart();
+        });
+
+        document.getElementById('sideCartBar').addEventListener('click', () => {
+            document.getElementById('cartModal').style.display = 'flex';
+            renderCart();
+        });
+
+        document.getElementById('closeCart').addEventListener('click', () => {
+            document.getElementById('cartModal').style.display = 'none';
+        });
+
+        document.getElementById('cartModal').addEventListener('click', (e) => {
+            if (e.target.id === 'cartModal') {
+                document.getElementById('cartModal').style.display = 'none';
+            }
+        });
+
+        // Initial render
+        renderProducts();
+        updateCartBadge();
+
+        // CSS Animation für Notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(400px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(400px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+    <script src="./chat.js"></script>
+</body>
+</html>
