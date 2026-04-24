@@ -1,5 +1,5 @@
 (function () {
-    const STORAGE_KEY = "eventvt_cookie_consent_v1";
+    const STORAGE_KEY = "eventvin_cookie_consent_v1";
     const DEFAULT_CONSENT = {
         necessary: true,
         analytics: false,
@@ -38,7 +38,7 @@
         };
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-        window.dispatchEvent(new CustomEvent("eventvt:consent-changed", { detail: normalized }));
+        window.dispatchEvent(new CustomEvent("eventvin:consent-changed", { detail: normalized }));
         return normalized;
     }
 
@@ -399,7 +399,7 @@
         }
     }
 
-    window.EventVTConsent = {
+    window.EventVINConsent = {
         hasConsent,
         getConsent: readConsent,
         hasDecision,

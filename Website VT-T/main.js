@@ -5,7 +5,7 @@ const API_BASE_URL = typeof process !== 'undefined' && process.env.VITE_API_URL
 
 const SETTINGS_ENDPOINT = `${API_BASE_URL}/api/settings`;
 const TRACK_ENDPOINT = `${API_BASE_URL}/api/track`;
-const SETTINGS_CACHE_KEY = "eventVT_settings_cache";
+const SETTINGS_CACHE_KEY = "eventVIN_settings_cache";
 let hasTrackedVisit = false;
 
 const DEFAULT_SETTINGS = {
@@ -298,7 +298,7 @@ function loadCachedSettings() {
 }
 
 function hasAnalyticsConsent() {
-    return Boolean(window.EventVTConsent?.hasConsent?.("analytics"));
+    return Boolean(window.EventVINConsent?.hasConsent?.("analytics"));
 }
 
 function trackVisit() {
@@ -337,7 +337,7 @@ function trackSocialClick(platform) {
 }
 
 function setupConsentTracking() {
-    window.addEventListener("eventvt:consent-changed", (event) => {
+    window.addEventListener("eventvin:consent-changed", (event) => {
         if (event.detail?.analytics) {
             trackVisit();
         }

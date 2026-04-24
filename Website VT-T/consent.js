@@ -1,5 +1,5 @@
 (function () {
-    const STORAGE_KEY = "eventVT_consent_v1";
+    const STORAGE_KEY = "eventVIN_consent_v1";
     const LEGACY_KEY = "cookie-consent";
     const VERSION = 1;
     const INITIAL_BANNER_DELAY_MS = 300;
@@ -57,7 +57,7 @@
             // Ignore persistence issues.
         }
 
-        window.dispatchEvent(new CustomEvent("eventvt:consent-changed", {
+        window.dispatchEvent(new CustomEvent("eventvin:consent-changed", {
             detail: normalized
         }));
 
@@ -119,7 +119,7 @@
         root = document.createElement("div");
         root.className = "consent-root";
         root.innerHTML = `
-            <div class="consent-banner" id="eventvt-consent-banner" hidden>
+            <div class="consent-banner" id="eventvin-consent-banner" hidden>
                 <div class="consent-copy">
                     <p class="consent-title">Cookie-Einstellungen</p>
                     <p class="consent-text">Wir nutzen notwendige Technologien für den Betrieb der Website. Statistik-Cookies helfen uns zu verstehen, welche Seiten genutzt werden. Diese sind optional.</p>
@@ -130,7 +130,7 @@
                     <button type="button" class="consent-button consent-button-primary" data-consent-action="accept-all">Alle akzeptieren</button>
                 </div>
             </div>
-            <div class="consent-modal" id="eventvt-consent-modal" hidden>
+            <div class="consent-modal" id="eventvin-consent-modal" hidden>
                 <div class="consent-backdrop" data-consent-action="close"></div>
                 <div class="consent-dialog" role="dialog" aria-modal="true" aria-labelledby="consent-dialog-title">
                     <div class="consent-dialog-header">
@@ -171,8 +171,8 @@
 
         document.body.appendChild(root);
 
-        banner = root.querySelector("#eventvt-consent-banner");
-        modal = root.querySelector("#eventvt-consent-modal");
+        banner = root.querySelector("#eventvin-consent-banner");
+        modal = root.querySelector("#eventvin-consent-modal");
         analyticsCheckbox = root.querySelector("#consent-analytics");
         marketingCheckbox = root.querySelector("#consent-marketing");
 
@@ -241,7 +241,7 @@
         }
     }
 
-    window.EventVTConsent = {
+    window.EventVINConsent = {
         getConsent: readStoredConsent,
         hasConsent,
         openPreferences: openModal,

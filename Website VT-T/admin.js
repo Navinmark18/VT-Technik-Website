@@ -1,4 +1,4 @@
-const TOKEN_KEY = "eventVT_admin_token";
+const TOKEN_KEY = "eventVIN_admin_token";
 const COLLAPSED_ROW_COUNT = 8;
 
 // Bestimme API URL basierend auf aktueller Domain

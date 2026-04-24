@@ -474,7 +474,7 @@
     <div id="app">
         <header>
             <a href="index.html" style="text-decoration: none; color: inherit;">
-                <div class="logo">EVENT<span>VT</span></div>
+                <div class="logo">EVENT<span>VIN</span></div>
             </a>
             <nav>
                 <a href="index.html">Home</a>
@@ -506,7 +506,7 @@
         </div>
 
         <footer>
-            <p>&copy; 2026 Event VT | <a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a> | <button type="button" class="footer-consent-link" data-open-consent>Cookie-Einstellungen</button> | <a href="admin.html">Admin Login</a></p>
+            <p>&copy; 2026 Event VIN | <a href="impressum.html">Impressum</a> | <a href="datenschutz.html">Datenschutz</a> | <button type="button" class="footer-consent-link" data-open-consent>Cookie-Einstellungen</button> | <a href="admin.html">Admin Login</a></p>
         </footer>
     </div>
 
@@ -709,7 +709,7 @@
         );
 
         // Warenkorb
-        let cart = JSON.parse(localStorage.getItem('eventVT_cart') || '[]');
+        let cart = JSON.parse(localStorage.getItem('eventVIN_cart') || '[]');
 
         // Produkte rendern
         function renderProducts(filteredProducts = products) {
@@ -799,7 +799,7 @@
         }
 
         function saveCart() {
-            localStorage.setItem('eventVT_cart', JSON.stringify(cart));
+            localStorage.setItem('eventVIN_cart', JSON.stringify(cart));
         }
 
         function updateCartBadge() {
