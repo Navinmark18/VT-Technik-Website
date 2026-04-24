@@ -42,32 +42,12 @@ const upload = multer({
 const app = express();
 const port = Number(process.env.PORT || 4000);
 
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
-  : "*";
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Erlaube alle localhost Verbindungen
-    if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
-      callback(null, true);
-      return;
-    }
-    
-    // Prüfe gegen erlaubte Origins
-    if (typeof allowedOrigins === 'string' && allowedOrigins === '*') {
-      callback(null, true);
-    } else if (Array.isArray(allowedOrigins) && allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-};
-
 app.use(helmet());
-app.use(cors(corsOptions));
+app.use(cors({
+    origin: '*', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json({ limit: "200kb" }));
 app.use("/uploads", express.static(path.join(__dirname, "../public/uploads")));
 app.set("trust proxy", 1);
