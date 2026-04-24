@@ -242,7 +242,15 @@ function clearToken() {
 async function apiFetch(path, options = {}) {
     const token = getToken();
     const headers = { ...(options.headers || {}), Authorization: `Bearer ${token}` };
-    return fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+    const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+
+    if (response.status === 401) {
+        clearToken();
+        setView(false);
+        throw new Error("Unauthorized");
+    }
+
+    return response;
 }
 
 async function login(password) {
