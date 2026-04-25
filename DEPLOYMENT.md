@@ -180,3 +180,6 @@ pm2 start npm --name "vt-frontend" -- run dev
 
 pm2 save    //speichert das ws gestarte wurde
 pm2 startup  //Auto startup
+
+
+https://gemini.google.com/share/ad7c995a9578
