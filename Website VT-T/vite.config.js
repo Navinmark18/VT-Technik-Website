@@ -1,14 +1,15 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 export default defineConfig({
+  plugins: [
+    basicSsl()
+  ],
   server: {
     host: '0.0.0.0',
     port: 5173,
-    allowedHosts: [
-      'eventvin.de',
-      'www.eventvin.de'
-    ],
+    allowedHosts: ['eventvin.de'],
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
